@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Premium neutral palette - warm creams and taupes */
+    --background: 30 25% 97%;
+    --foreground: 30 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 15%;
+
+    /* Deep emerald primary */
+    --primary: 158 64% 25%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Soft neutral secondary */
+    --secondary: 30 15% 92%;
+    --secondary-foreground: 30 10% 15%;
+
+    --muted: 30 20% 94%;
+    --muted-foreground: 30 8% 45%;
+
+    /* Gold accent */
+    --accent: 43 74% 49%;
+    --accent-foreground: 30 10% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 158 64% 25%;
+
+    --radius: 0.75rem;
+
+    /* Premium gradients */
+    --gradient-emerald-gold: linear-gradient(135deg, hsl(158 64% 25%) 0%, hsl(43 74% 49%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    
+    /* Glassmorphism shadows */
+    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --shadow-premium: 0 20px 60px -10px rgba(30, 58, 48, 0.3);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Deep black background with subtle warmth */
+    --background: 0 0% 6%;
+    --foreground: 30 15% 92%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 30 15% 92%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 30 15% 92%;
+
+    /* Brighter emerald for dark mode */
+    --primary: 158 64% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 30 15% 92%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 30 8% 55%;
+
+    /* Metallic gold accent */
+    --accent: 43 88% 62%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 30 15% 92%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 43 88% 62%;
+    
+    /* Premium dark gradients */
+    --gradient-emerald-gold: linear-gradient(135deg, hsl(158 64% 40%) 0%, hsl(43 88% 62%) 100%);
+    --shadow-premium: 0 20px 60px -10px rgba(0, 0, 0, 0.6);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .glass-morphism {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .text-gradient {
+    background: var(--gradient-emerald-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Touch-friendly tap targets */
+  @media (hover: none) {
+    button, a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
