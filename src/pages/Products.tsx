@@ -1,19 +1,27 @@
 import { ProductCard } from "@/components/ProductCard";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { ProductHeader } from "@/components/ProductHeader";
-// Remove the static import: import { allProducts } from '@/data/products';
+
 import { FilterProvider, useFilters } from "@/contexts/FilterContext";
 import { filterProducts } from "@/utils/productFilters";
-
-// --- NEW IMPORTS ---
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ProductCardSkeleton } from "@/components/LoadingState"; // Make sure this component exists
+import { ProductCardSkeleton } from "@/components/LoadingState";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Define the Product type based on your Supabase table
-// (You might already have this in @/data/products.ts, adjust if needed)
+// Type definition for Supabase Jsonb type
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+// --- NEW: Correct Product Interface Definition ---
+// This interface now matches your Supabase table and is exported
+// so other files (like ProductDetail.tsx) can use it.
 export interface Product {
   id: string; // UUID
   created_at?: string;
@@ -26,67 +34,55 @@ export interface Product {
   gender?: string | null;
   onSale?: boolean;
   stock_quantity?: number;
-  image_url?: string | null; // Use image_url
-  additional_images?: string[] | null;
-  specifications?: Json | null; // Assuming Json type is defined or imported
+  image_url?: string | null;
+  additional_images?: string[] | null; // <-- FIELD IS NOW INCLUDED
+  specifications?: Json | null; // <-- FIELD IS NOW INCLUDED
   is_featured?: boolean;
 }
-
-// Type definition for Supabase Jsonb type if not already defined
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+// --- END NEW INTERFACE ---
 
 /**
- * NEW: Function to fetch products from Supabase
+ * Function to fetch products from Supabase
  */
 const fetchProducts = async (): Promise<Product[]> => {
   const { data, error } = await supabase
     .from("products")
-    .select("*") // Fetches all columns defined in your table
-    .order("created_at", { ascending: false }); // Optional: order by newest
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error fetching products:", error);
     throw new Error(error.message);
   }
 
-  // Cast the data to Product[]. Ensure column names match.
   return data as Product[];
 };
 
 const ProductsContent = () => {
   const { filters, setSortBy } = useFilters();
 
-  // --- NEW: UseReactQuery to fetch data ---
+  // This useQuery now uses the new, correct Product interface
   const {
-    data: allProductsList, // This now comes from Supabase
+    data: allProductsList,
     isLoading,
     error,
   } = useQuery<Product[]>({
-    queryKey: ["products"], // A unique key for caching this query
-    queryFn: fetchProducts, // The function that does the fetching
+    queryKey: ["products"],
+    queryFn: fetchProducts,
   });
-  // --- END NEW ---
 
-  // --- NEW: Handle Loading State ---
+  // --- Handle Loading State ---
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-8">
-        {/* Render skeletons based on a reasonable number, e.g., 6 */}
         {[...Array(6)].map((_, i) => (
           <ProductCardSkeleton key={i} />
         ))}
       </div>
     );
   }
-  // --- END NEW ---
 
-  // --- NEW: Handle Error State ---
+  // --- Handle Error State ---
   if (error || !allProductsList) {
     return (
       <Alert variant="destructive" className="glass-morphism">
@@ -96,7 +92,6 @@ const ProductsContent = () => {
           We couldn't load the products at this time. Please try refreshing the
           page.
           <br />
-          {/* Display error message if available */}
           {error && (
             <span className="text-xs text-muted-foreground/80">
               {error.message}
@@ -106,10 +101,7 @@ const ProductsContent = () => {
       </Alert>
     );
   }
-  // --- END NEW ---
 
-  // Apply filters *after* data is fetched from Supabase
-  // Ensure filterProducts function can handle the Product interface properties
   const products = filterProducts(allProductsList, filters);
 
   return (
@@ -152,8 +144,7 @@ const ProductsContent = () => {
                 <option value="featured">Sort by: Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest First</option>{" "}
-                {/* Assumes default fetch order is newest */}
+                <option value="newest">Newest First</option>
               </select>
             </div>
 
@@ -162,13 +153,13 @@ const ProductsContent = () => {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-8">
                 {products.map((product, index) => (
                   <div
-                    key={product.id} // Use the UUID from Supabase
+                    key={product.id}
                     className="animate-fade-in-up"
                     style={{
                       animationDelay: `${index * 0.1}s`,
                     }}
                   >
-                    {/* Pass props according to ProductCardProps */}
+                    {/* Pass the full product object */}
                     <ProductCard product={product} />
                   </div>
                 ))}

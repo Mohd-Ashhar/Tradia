@@ -11,27 +11,26 @@ import {
   Truck,
   Shield,
   RotateCcw,
-  Loader2, // Import loader
+  Loader2,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-// Remove static data import: import { allProducts } from '@/data/products';
 import { useCart } from "@/contexts/CartContext";
-
-// --- NEW IMPORTS ---
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-// Import the Product interface we defined in Products.tsx
 import { Product } from "@/pages/Products";
+import { useAuth } from "@/hooks/useAuth"; // Import useAuth
+import { cn } from "@/lib/utils"; // Import cn
 
 /**
- * NEW: Function to fetch a single product by its ID
+ * Function to fetch a single product by its ID
  */
 const fetchProductById = async (id: string): Promise<Product | null> => {
   const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("id", id)
-    .single(); // .single() fetches one record or null
+    .single();
 
   if (error) {
     console.error("Error fetching product:", error);
@@ -44,31 +43,27 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth(); // Get user
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false); // Loading state for Buy Now
 
-  // --- NEW: Fetch data using React Query ---
   const {
     data: productData,
     isLoading,
     error,
   } = useQuery<Product | null>({
-    // The queryKey uniquely identifies this query.
-    // It includes the 'id' so React Query fetches a new
-    // product if the id in the URL changes.
     queryKey: ["product", id],
     queryFn: async () => {
-      if (!id) return null; // Don't fetch if there's no ID
+      if (!id) return null;
       return await fetchProductById(id);
     },
-    enabled: !!id, // Only run the query if 'id' exists
-    retry: 1, // Don't retry endlessly if product isn't found
+    enabled: !!id,
+    retry: 1,
   });
 
-  // --- NEW: Updated redirect effect ---
   useEffect(() => {
-    // If loading is done AND we still have no product (or an error), then redirect.
     if (!isLoading && (!productData || error)) {
       toast.error("Product not found", {
         description: "Redirecting you to all products.",
@@ -77,7 +72,6 @@ const ProductDetail = () => {
     }
   }, [isLoading, productData, error, navigate]);
 
-  // Scroll animation effect (no change)
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -89,14 +83,72 @@ const ProductDetail = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [hasAnimated]);
 
-  // --- NEW: Handle Add to Cart ---
   const handleAddToCartClick = async () => {
     if (productData) {
-      await addToCart(productData, quantity); // Pass the full product object
+      await addToCart(productData, quantity);
     }
   };
 
-  // --- NEW: Loading State ---
+  // --- NEW: handleBuyNow function ---
+  const handleBuyNow = async () => {
+    if (!user) {
+      toast.error("Please log in to buy this item.");
+      navigate("/auth");
+      return;
+    }
+
+    if (!productData) return;
+
+    setIsBuyingNow(true);
+
+    // --- Get placeholder shipping address (same as cart) ---
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("shipping_addresses, email")
+      .eq("id", user.id)
+      .single();
+
+    const shipping_address = profile?.shipping_addresses?.[0] || {
+      name: profile?.email || user.email,
+      line1: "123 Default St",
+      city: "Anytown",
+      postal_code: "12345",
+      country: "US",
+    };
+    // --- End placeholder ---
+
+    try {
+      // Call the new Supabase function
+      const { data: orderNumber, error } = await supabase.rpc(
+        "create_order_single_item",
+        {
+          product_id_to_buy: productData.id,
+          quantity_to_buy: quantity,
+          shipping_address_json: shipping_address,
+          billing_address_json: shipping_address,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      // Success!
+      toast.success("Order placed successfully!", {
+        description: `Your order #${orderNumber} is being processed.`,
+      });
+      navigate(`/order-success/${orderNumber}`); // Redirect to success page
+    } catch (error: any) {
+      console.error("Buy Now error:", error);
+      toast.error("Checkout Failed", {
+        description:
+          error.message || "Could not place your order. Please try again.",
+      });
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
   if (isLoading || !productData) {
     return (
       <div className="min-h-screen bg-background">
@@ -107,8 +159,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  // --- At this point, productData is loaded and valid ---
 
   const discountPercent =
     productData.originalPrice && productData.price
@@ -124,18 +174,7 @@ const ProductDetail = () => {
       <ProductHeader />
 
       <div className="container mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb (no change) */}
-        <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">
-            Home
-          </Link>
-          <span>/</span>
-          <Link to="/products" className="hover:text-foreground">
-            Products
-          </Link>
-          <span>/</span>
-          <span className="text-foreground">{productData.name}</span>
-        </div>
+        {/* ... (Breadcrumb, Image Viewer, Product Info, etc.) ... */}
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Left Column - Image Viewer */}
@@ -192,25 +231,97 @@ const ProductDetail = () => {
               className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6 animate-fade-in-up transition-all"
               style={{ animationDelay: "0.5s" }}
             >
-              {/* ... (Quantity controls - no change) ... */}
+              {/* --- Quantity Controls (No Change) --- */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Qty:
+                </span>
+                <div className="flex items-center gap-1 rounded-lg border border-border bg-background/50 p-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </Button>
+                  <span className="w-10 text-center text-lg font-semibold">
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              {/* --- NEW: Button Container --- */}
+              <div className="flex flex-1 items-center gap-3">
+                <Button
+                  size="lg"
+                  className="flex-1 text-lg"
+                  onClick={handleAddToCartClick}
+                >
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Add to Cart
+                </Button>
+
+                {/* --- NEW: Buy Now Button --- */}
+                <Button
+                  size="lg"
+                  className="flex-1 text-lg bg-gradient-to-r from-accent to-yellow-400 text-white"
+                  onClick={handleBuyNow}
+                  disabled={isBuyingNow}
+                >
+                  {isBuyingNow ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Zap className="mr-2 h-5 w-5" />
+                  )}
+                  Buy Now
+                </Button>
+                {/* ------------------------- */}
+              </div>
 
               <Button
+                variant="outline"
                 size="lg"
-                className="flex-1 text-lg"
-                onClick={handleAddToCartClick} // Use new handler
+                className="h-14 w-14 p-0 glass-morphism transition-all hover:scale-110"
+                onClick={() => setIsWishlisted(!isWishlisted)}
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                <Heart
+                  className={cn(
+                    "h-6 w-6",
+                    isWishlisted && "fill-destructive text-destructive"
+                  )}
+                />
               </Button>
-              {/* ... (Wishlist button - no change) ... */}
             </div>
 
-            {/* Guarantees (no change) */}
+            {/* ... (Guarantees, Specifications, Reviews) ... */}
             <div className="flex flex-col gap-3 rounded-2xl border border-border/50 p-6 glass-morphism">
-              {/* ... */}
+              <div className="flex items-center gap-3 text-sm">
+                <Truck className="h-5 w-5 text-primary" />
+                <span className="font-medium">
+                  Free shipping on orders over $500
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <RotateCcw className="h-5 w-5 text-primary" />
+                <span className="font-medium">30-day return policy</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Shield className="h-5 w-5 text-primary" />
+                <span className="font-medium">
+                  Lifetime craftsmanship guarantee
+                </span>
+              </div>
             </div>
 
-            {/* --- NEW: Specifications from DB --- */}
             {productData.specifications && (
               <div
                 className={`glass-morphism rounded-2xl p-6 transition-all duration-1000 animate-fade-in-up`}
@@ -218,7 +329,6 @@ const ProductDetail = () => {
               >
                 <h3 className="mb-4 text-xl font-bold">Specifications</h3>
                 <dl className="grid gap-3 sm:grid-cols-2">
-                  {/* Map over the JSONB object entries */}
                   {Object.entries(productData.specifications).map(
                     ([key, value]) => (
                       <div key={key} className="flex flex-col">
@@ -235,7 +345,6 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Reviews Section (no change) */}
         <div
           className={`mt-16 transition-all duration-1000 animate-fade-in-up`}
           style={{ animationDelay: "0.7s" }}

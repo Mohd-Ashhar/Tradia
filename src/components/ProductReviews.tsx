@@ -1,13 +1,20 @@
-import { Star, ThumbsUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { Star, ThumbsUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface Review {
   id: string;
@@ -22,32 +29,35 @@ interface Review {
 
 const reviews: Review[] = [
   {
-    id: '1',
-    author: 'Sarah Mitchell',
+    id: "1",
+    author: "Sarah Mitchell",
     rating: 5,
-    date: 'January 15, 2024',
-    title: 'Absolutely stunning quality',
-    content: 'This bag exceeded all my expectations. The craftsmanship is impeccable, and the leather feels so luxurious. The emerald color is even more beautiful in person. Worth every penny!',
+    date: "January 15, 2024",
+    title: "Absolutely stunning quality",
+    content:
+      "This bag exceeded all my expectations. The craftsmanship is impeccable, and the leather feels so luxurious. The emerald color is even more beautiful in person. Worth every penny!",
     helpful: 24,
     verified: true,
   },
   {
-    id: '2',
-    author: 'Emma Rodriguez',
+    id: "2",
+    author: "Emma Rodriguez",
     rating: 5,
-    date: 'January 8, 2024',
-    title: 'Perfect everyday luxury',
-    content: 'I use this bag daily and it still looks brand new after months of use. The size is perfect for work and the compartments are very practical. Highly recommend!',
+    date: "January 8, 2024",
+    title: "Perfect everyday luxury",
+    content:
+      "I use this bag daily and it still looks brand new after months of use. The size is perfect for work and the compartments are very practical. Highly recommend!",
     helpful: 18,
     verified: true,
   },
   {
-    id: '3',
-    author: 'Jessica Chen',
+    id: "3",
+    author: "Jessica Chen",
     rating: 4,
-    date: 'December 28, 2023',
-    title: 'Beautiful but slightly heavy',
-    content: 'Gorgeous bag with excellent quality. My only note is that it\'s a bit heavier than expected when fully packed, but the style makes up for it.',
+    date: "December 28, 2023",
+    title: "Beautiful but slightly heavy",
+    content:
+      "Gorgeous bag with excellent quality. My only note is that it's a bit heavier than expected when fully packed, but the style makes up for it.",
     helpful: 12,
     verified: true,
   },
@@ -61,9 +71,7 @@ const StarRating = ({ rating }: { rating: number }) => {
           key={index}
           className={cn(
             "h-4 w-4",
-            index < rating
-              ? "fill-accent text-accent"
-              : "fill-muted text-muted"
+            index < rating ? "fill-accent text-accent" : "fill-muted text-muted"
           )}
         />
       ))}
@@ -83,7 +91,9 @@ export const ProductReviews = () => {
           <h2 className="mb-2 text-3xl font-bold">Customer Reviews</h2>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-4xl font-bold text-gradient">{averageRating}</span>
+              <span className="text-4xl font-bold text-gradient">
+                {averageRating}
+              </span>
               <div>
                 <StarRating rating={Math.floor(averageRating)} />
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -110,7 +120,10 @@ export const ProductReviews = () => {
               <div className="flex gap-4">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white">
-                    {review.author.split(' ').map(n => n[0]).join('')}
+                    {review.author
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -124,7 +137,9 @@ export const ProductReviews = () => {
                   </div>
                   <div className="mt-1 flex items-center gap-2">
                     <StarRating rating={review.rating} />
-                    <span className="text-sm text-muted-foreground">{review.date}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {review.date}
+                    </span>
                   </div>
                 </div>
               </div>

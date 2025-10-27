@@ -63,7 +63,7 @@ export const ProductHeader = () => {
             </h1>
           </Link>
 
-          <nav className="hidden items-center space-x-8 md:flex">
+          {/* <nav className="hidden items-center space-x-8 md:flex">
             <Link
               to="/products"
               className="text-sm font-medium transition-colors hover:text-primary"
@@ -88,9 +88,9 @@ export const ProductHeader = () => {
             >
               Sale
             </Link>
-          </nav>
+          </nav> */}
 
-          <div
+          {/* <div
             className={cn(
               "hidden md:flex items-center transition-all duration-300",
               isSearchOpen ? "w-64" : "w-10"
@@ -117,27 +117,27 @@ export const ProductHeader = () => {
                 <Search className="h-5 w-5" />
               </Button>
             )}
-          </div>
+          </div> */}
 
           {/* Actions */}
           <div className="flex items-center space-x-2">
-            {/* ... (Mobile Search, Wishlist remain the same) ... */}
-            <Button
+         
+            {/* <Button
               variant="ghost"
               size="icon"
               className="md:hidden hover:bg-primary/10"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               <Search className="h-5 w-5" />
-            </Button>
+            </Button> */}
 
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="hidden sm:flex hover:bg-primary/10"
             >
               <Heart className="h-5 w-5" />
-            </Button>
+            </Button> */}
 
             {/* Account */}
             <DropdownMenu>
@@ -237,7 +237,7 @@ export const ProductHeader = () => {
 
         {isMobileMenuOpen && (
           <nav className="flex flex-col space-y-4 border-t border-border/50 py-4 md:hidden">
-            <Link
+            {/* <Link
               to="/products"
               className="text-sm font-medium transition-colors hover:text-primary"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -264,7 +264,7 @@ export const ProductHeader = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Sale
-            </Link>
+            </Link> */}
           </nav>
         )}
       </div>
