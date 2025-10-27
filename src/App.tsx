@@ -16,6 +16,9 @@ import Men from "./pages/Men";
 import Women from "./pages/Women";
 import Sale from "./pages/Sale";
 import { CartProvider } from "./contexts/CartContext";
+import OrderSuccess from '@/pages/OrderSuccess';
+import OrderHistory from '@/pages/OrderHistory';
+
 
 const queryClient = new QueryClient();
 
@@ -38,6 +41,12 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/install" element={<Install />} />
               <Route path="/auth" element={<Auth />} />
+
+              <Route
+                path="/order-success/:orderNumber"
+                element={<OrderSuccess />}
+              />
+              <Route path="/orders" element={<OrderHistory />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

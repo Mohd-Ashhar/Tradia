@@ -1,19 +1,31 @@
-import { useState } from 'react';
-import { Shirt, Watch, Gem, Footprints, ShoppingBag, Sparkles, ChevronDown } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import { useFilters } from '@/contexts/FilterContext';
+import { useState } from "react";
+import {
+  Shirt,
+  Watch,
+  Gem,
+  Footprints,
+  ShoppingBag,
+  Sparkles,
+  ChevronDown,
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+import { useFilters } from "@/contexts/FilterContext";
 
 const categories = [
-  { id: 'clothing', name: 'Clothing', icon: Shirt },
-  { id: 'accessories', name: 'Accessories', icon: Sparkles },
-  { id: 'jewelry', name: 'Jewelry', icon: Gem },
-  { id: 'footwear', name: 'Footwear', icon: Footprints },
-  { id: 'bags', name: 'Bags', icon: ShoppingBag },
-  { id: 'watches', name: 'Watches', icon: Watch },
+  { id: "clothing", name: "Clothing", icon: Shirt },
+  { id: "accessories", name: "Accessories", icon: Sparkles },
+  { id: "jewelry", name: "Jewelry", icon: Gem },
+  { id: "footwear", name: "Footwear", icon: Footprints },
+  { id: "bags", name: "Bags", icon: ShoppingBag },
+  { id: "watches", name: "Watches", icon: Watch },
 ];
 
 export const FilterSidebar = () => {
@@ -25,14 +37,14 @@ export const FilterSidebar = () => {
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
     if (checked) {
       setCategories([...filters.categories, categoryId]);
     } else {
-      setCategories(filters.categories.filter(c => c !== categoryId));
+      setCategories(filters.categories.filter((c) => c !== categoryId));
     }
   };
 
@@ -40,7 +52,7 @@ export const FilterSidebar = () => {
     if (checked) {
       setSizes([...filters.sizes, size]);
     } else {
-      setSizes(filters.sizes.filter(s => s !== size));
+      setSizes(filters.sizes.filter((s) => s !== size));
     }
   };
 
@@ -54,7 +66,7 @@ export const FilterSidebar = () => {
       {/* Categories */}
       <Collapsible open={openSections.categories}>
         <CollapsibleTrigger
-          onClick={() => toggleSection('categories')}
+          onClick={() => toggleSection("categories")}
           className="mb-4 flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wider"
         >
           Categories
@@ -68,10 +80,12 @@ export const FilterSidebar = () => {
         <CollapsibleContent className="space-y-3">
           {categories.map((category) => (
             <div key={category.id} className="flex items-center space-x-3">
-              <Checkbox 
+              <Checkbox
                 id={category.id}
                 checked={filters.categories.includes(category.id)}
-                onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleCategoryChange(category.id, checked as boolean)
+                }
               />
               <Label
                 htmlFor={category.id}
@@ -90,7 +104,7 @@ export const FilterSidebar = () => {
       {/* Price Range */}
       <Collapsible open={openSections.price}>
         <CollapsibleTrigger
-          onClick={() => toggleSection('price')}
+          onClick={() => toggleSection("price")}
           className="mb-4 flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wider"
         >
           Price Range
@@ -113,41 +127,6 @@ export const FilterSidebar = () => {
             <span className="font-medium">${filters.priceRange[0]}</span>
             <span className="font-medium">${filters.priceRange[1]}</span>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="my-6 h-px bg-border" />
-
-      {/* Size */}
-      <Collapsible open={openSections.size}>
-        <CollapsibleTrigger
-          onClick={() => toggleSection('size')}
-          className="mb-4 flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wider"
-        >
-          Size
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              openSections.size && "rotate-180"
-            )}
-          />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3">
-          {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-            <div key={size} className="flex items-center space-x-3">
-              <Checkbox 
-                id={`size-${size}`}
-                checked={filters.sizes.includes(size)}
-                onCheckedChange={(checked) => handleSizeChange(size, checked as boolean)}
-              />
-              <Label
-                htmlFor={`size-${size}`}
-                className="flex-1 cursor-pointer text-sm font-medium"
-              >
-                {size}
-              </Label>
-            </div>
-          ))}
         </CollapsibleContent>
       </Collapsible>
     </aside>
