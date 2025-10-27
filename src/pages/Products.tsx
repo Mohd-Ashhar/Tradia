@@ -1,19 +1,121 @@
-import { ProductCard } from '@/components/ProductCard';
-import { FilterSidebar } from '@/components/FilterSidebar';
-import { ProductHeader } from '@/components/ProductHeader';
-import { allProducts } from '@/data/products';
-import { FilterProvider, useFilters } from '@/contexts/FilterContext';
-import { filterProducts } from '@/utils/productFilters';
+import { ProductCard } from "@/components/ProductCard";
+import { FilterSidebar } from "@/components/FilterSidebar";
+import { ProductHeader } from "@/components/ProductHeader";
+// Remove the static import: import { allProducts } from '@/data/products';
+import { FilterProvider, useFilters } from "@/contexts/FilterContext";
+import { filterProducts } from "@/utils/productFilters";
+
+// --- NEW IMPORTS ---
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ProductCardSkeleton } from "@/components/LoadingState"; // Make sure this component exists
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Define the Product type based on your Supabase table
+// (You might already have this in @/data/products.ts, adjust if needed)
+export interface Product {
+  id: string; // UUID
+  created_at?: string;
+  updated_at?: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  originalPrice?: number | null;
+  category: string;
+  gender?: string | null;
+  onSale?: boolean;
+  stock_quantity?: number;
+  image_url?: string | null; // Use image_url
+  additional_images?: string[] | null;
+  specifications?: Json | null; // Assuming Json type is defined or imported
+  is_featured?: boolean;
+}
+
+// Type definition for Supabase Jsonb type if not already defined
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+/**
+ * NEW: Function to fetch products from Supabase
+ */
+const fetchProducts = async (): Promise<Product[]> => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*") // Fetches all columns defined in your table
+    .order("created_at", { ascending: false }); // Optional: order by newest
+
+  if (error) {
+    console.error("Error fetching products:", error);
+    throw new Error(error.message);
+  }
+
+  // Cast the data to Product[]. Ensure column names match.
+  return data as Product[];
+};
 
 const ProductsContent = () => {
-  const allProductsList = allProducts;
   const { filters, setSortBy } = useFilters();
+
+  // --- NEW: UseReactQuery to fetch data ---
+  const {
+    data: allProductsList, // This now comes from Supabase
+    isLoading,
+    error,
+  } = useQuery<Product[]>({
+    queryKey: ["products"], // A unique key for caching this query
+    queryFn: fetchProducts, // The function that does the fetching
+  });
+  // --- END NEW ---
+
+  // --- NEW: Handle Loading State ---
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-8">
+        {/* Render skeletons based on a reasonable number, e.g., 6 */}
+        {[...Array(6)].map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+  // --- END NEW ---
+
+  // --- NEW: Handle Error State ---
+  if (error || !allProductsList) {
+    return (
+      <Alert variant="destructive" className="glass-morphism">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error Fetching Products</AlertTitle>
+        <AlertDescription>
+          We couldn't load the products at this time. Please try refreshing the
+          page.
+          <br />
+          {/* Display error message if available */}
+          {error && (
+            <span className="text-xs text-muted-foreground/80">
+              {error.message}
+            </span>
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  // --- END NEW ---
+
+  // Apply filters *after* data is fetched from Supabase
+  // Ensure filterProducts function can handle the Product interface properties
   const products = filterProducts(allProductsList, filters);
 
   return (
     <div className="min-h-screen bg-background">
       <ProductHeader />
-      
+
       <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-8 animate-fade-in-up">
@@ -36,9 +138,13 @@ const ProductsContent = () => {
             {/* Sort & Filter Bar */}
             <div className="mb-8 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{products.length}</span> products
+                Showing{" "}
+                <span className="font-semibold text-foreground">
+                  {products.length}
+                </span>{" "}
+                products
               </p>
-              <select 
+              <select
                 className="glass-morphism rounded-lg border-border/50 px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
                 value={filters.sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -46,36 +152,51 @@ const ProductsContent = () => {
                 <option value="featured">Sort by: Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest First</option>
+                <option value="newest">Newest First</option>{" "}
+                {/* Assumes default fetch order is newest */}
               </select>
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-8">
-              {products.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="animate-fade-in-up"
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
-                >
-                  <ProductCard {...product} />
-                </div>
-              ))}
-            </div>
+            {products.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-8">
+                {products.map((product, index) => (
+                  <div
+                    key={product.id} // Use the UUID from Supabase
+                    className="animate-fade-in-up"
+                    style={{
+                      animationDelay: `${index * 0.1}s`,
+                    }}
+                  >
+                    {/* Pass props according to ProductCardProps */}
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed text-center">
+                <h3 className="text-2xl font-semibold tracking-tight">
+                  No Products Found
+                </h3>
+                <p className="mt-2 text-muted-foreground">
+                  Try adjusting your filters or check back later.
+                </p>
+              </div>
+            )}
 
-            {/* Load More */}
-            <div className="mt-12 text-center">
-              <button className="glass-morphism rounded-full px-8 py-3 font-medium transition-all hover:scale-105 hover:shadow-[var(--shadow-glass)]">
-                Load More Products
-              </button>
-            </div>
+            {/* Load More Button (Functionality not implemented yet) */}
+            {products.length > 0 && (
+              <div className="mt-12 text-center">
+                <button className="glass-morphism rounded-full px-8 py-3 font-medium transition-all hover:scale-105 hover:shadow-[var(--shadow-glass)]">
+                  Load More Products
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </main>
 
-      {/* Mobile Filter Button */}
+      {/* Mobile Filter Button (Functionality not implemented yet) */}
       <div className="fixed bottom-6 right-6 lg:hidden">
         <button className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-accent shadow-[var(--shadow-premium)] transition-transform hover:scale-110">
           <svg
@@ -95,6 +216,7 @@ const ProductsContent = () => {
   );
 };
 
+// Ensure Products wraps ProductsContent with FilterProvider
 const Products = () => {
   return (
     <FilterProvider>
